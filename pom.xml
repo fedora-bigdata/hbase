@@ -497,7 +497,7 @@
               <configuration>
                 <skip>${surefire.skipSecondPart}</skip>
                 <testFailureIgnore>false</testFailureIgnore>
-                <forkMode>perThread</forkMode>
+                <forkMode>perthread</forkMode>
                 <perCoreThreadCount>false</perCoreThreadCount>
                 <threadCount>${surefire.secondPartThreadCount}</threadCount>
                 <parallel>classes</parallel>
