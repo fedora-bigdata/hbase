@@ -19,9 +19,13 @@
 package org.apache.hadoop.hbase.rest;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
@@ -42,14 +46,15 @@ import org.apache.hadoop.hbase.util.Strings;
 import org.apache.hadoop.hbase.util.VersionInfo;
 import org.apache.hadoop.net.DNS;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.security.SslSelectChannelConnector;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.FilterHolder;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.thread.QueuedThreadPool;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import com.google.common.base.Preconditions;
 import com.sun.jersey.api.json.JSONConfiguration;
@@ -187,24 +192,6 @@ public class RESTServer implements Constants {
 
     // set up Jetty and run the embedded server
 
-    Server server = new Server();
-
-    Connector connector = new SelectChannelConnector();
-    if(conf.getBoolean(REST_SSL_ENABLED, false)) {
-      SslSelectChannelConnector sslConnector = new SslSelectChannelConnector();
-      String keystore = conf.get(REST_SSL_KEYSTORE_STORE);
-      String password = conf.get(REST_SSL_KEYSTORE_PASSWORD);
-      String keyPassword = conf.get(REST_SSL_KEYSTORE_KEYPASSWORD, password);
-      sslConnector.setKeystore(keystore);
-      sslConnector.setPassword(password);
-      sslConnector.setKeyPassword(keyPassword);
-      connector = sslConnector;
-    }
-    connector.setPort(servlet.getConfiguration().getInt("hbase.rest.port", 8080));
-    connector.setHost(servlet.getConfiguration().get("hbase.rest.host", "0.0.0.0"));
-
-    server.addConnector(connector);
-
     // Set the default max thread number to 100 to limit
     // the number of concurrent requests so that REST server doesn't OOM easily.
     // Jetty set the default max thread number to 250, if we don't set it.
@@ -214,17 +201,36 @@ public class RESTServer implements Constants {
     int minThreads = servlet.getConfiguration().getInt("hbase.rest.threads.min", 2);
     QueuedThreadPool threadPool = new QueuedThreadPool(maxThreads);
     threadPool.setMinThreads(minThreads);
-    server.setThreadPool(threadPool);
 
-    server.setSendServerVersion(false);
-    server.setSendDateHeader(false);
+    Server server = new Server(threadPool);
+
+    HttpConfiguration http_config = new HttpConfiguration();
+    http_config.setSendServerVersion(false);
+    http_config.setSendDateHeader(false);
+
+    ServerConnector connector;
+    if(conf.getBoolean(REST_SSL_ENABLED, false)) {
+      SslContextFactory sslContextFactory = new SslContextFactory(conf.get(REST_SSL_KEYSTORE_STORE));
+      String password = conf.get(REST_SSL_KEYSTORE_PASSWORD);
+      String keyPassword = conf.get(REST_SSL_KEYSTORE_KEYPASSWORD, password);
+      sslContextFactory.setKeyStorePassword(password);
+      sslContextFactory.setKeyManagerPassword(keyPassword);
+      connector = new ServerConnector(server, sslContextFactory, new HttpConnectionFactory(http_config));
+    } else {
+      connector = new ServerConnector(server, new HttpConnectionFactory(http_config));
+    }
+    connector.setPort(servlet.getConfiguration().getInt("hbase.rest.port", 8080));
+    connector.setHost(servlet.getConfiguration().get("hbase.rest.host", "0.0.0.0"));
+
+    server.addConnector(connector);
+
     server.setStopAtShutdown(true);
       // set up context
-    Context context = new Context(server, "/", Context.SESSIONS);
+    ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
     context.addServlet(shPojoMap, "/status/cluster");
     context.addServlet(sh, "/*");
     if (authFilter != null) {
-      context.addFilter(authFilter, "/*", 1);
+      context.addFilter(authFilter, "/*", EnumSet.of(DispatcherType.REQUEST));
     }
 
     // Load filters from configuration.
@@ -232,7 +238,7 @@ public class RESTServer implements Constants {
       ArrayUtils.EMPTY_STRING_ARRAY);
     for (String filter : filterClasses) {
       filter = filter.trim();
-      context.addFilter(Class.forName(filter), "/*", 0);
+      context.addFilter(filter, "/*", EnumSet.of(DispatcherType.REQUEST));
     }
 
     // Put up info server.

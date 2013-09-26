@@ -18,6 +18,9 @@
  */
 package org.apache.hadoop.hbase.rest;
 
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,9 +28,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.rest.filter.GzipFilter;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.util.StringUtils;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
@@ -61,25 +67,29 @@ public class HBaseRESTTestingUtility {
 
     LOG.info("configured " + ServletContainer.class.getName());
     
+    HttpConfiguration http_config = new HttpConfiguration();
+    http_config.setSendServerVersion(false);
+    http_config.setSendDateHeader(false);
+
     // set up Jetty and run the embedded server
     server = new Server(0);
-    server.setSendServerVersion(false);
-    server.setSendDateHeader(false);
       // set up context
-    Context context = new Context(server, "/", Context.SESSIONS);
+    ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
     context.addServlet(sh, "/*");
     // Load filters specified from configuration.
     String[] filterClasses = conf.getStrings(Constants.FILTER_CLASSES,
       ArrayUtils.EMPTY_STRING_ARRAY);
     for (String filter : filterClasses) {
       filter = filter.trim();
-      context.addFilter(Class.forName(filter), "/*", 0);
+      context.addFilter(filter, "/*", EnumSet.of(DispatcherType.REQUEST));
     }
     LOG.info("Loaded filter classes :" + filterClasses);
+    ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(http_config));
+    server.addConnector(connector);
       // start the server
     server.start();
       // get the port
-    testServletPort = server.getConnectors()[0].getLocalPort();
+    testServletPort = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
 
     LOG.info("started " + server.getClass().getName() + " on port " + 
       testServletPort);
