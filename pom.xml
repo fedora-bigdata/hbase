@@ -1330,8 +1330,8 @@
   <!-- Dependencies needed by subprojects -->
   <dependencies>
     <dependency>
-      <groupId>com.github.stephenc.findbugs</groupId>
-      <artifactId>findbugs-annotations</artifactId>
+      <groupId>net.sourceforge.findbugs</groupId>
+      <artifactId>annotations</artifactId>
       <version>${findbugs-annotations}</version>
       <scope>compile</scope>
     </dependency>
