@@ -25,10 +25,10 @@ import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.util.MetricsBase;
 import org.apache.hadoop.metrics.util.MetricsRegistry;
 
-import com.yammer.metrics.stats.Sample;
-import com.yammer.metrics.stats.Snapshot;
-import com.yammer.metrics.stats.UniformSample;
-import com.yammer.metrics.stats.ExponentiallyDecayingSample;
+import com.codahale.metrics.Reservoir;
+import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.UniformReservoir;
+import com.codahale.metrics.ExponentiallyDecayingReservoir;
 
 @Deprecated
 public class MetricsHistogram extends MetricsBase {
@@ -67,8 +67,8 @@ public class MetricsHistogram extends MetricsBase {
     this.max = new AtomicLong();
     this.sum = new AtomicLong();
     this.sample = forwardBiased ? 
-        new ExponentiallyDecayingSample(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA) 
-    : new UniformSample(DEFAULT_SAMPLE_SIZE);
+        new ExponentiallyDecayingReservoir(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA) 
+    : new UniformReservoir(DEFAULT_SAMPLE_SIZE);
 
     this.variance =  new AtomicReference<double[]>(new double[]{-1, 0});
     this.count = new AtomicLong();
@@ -100,7 +100,7 @@ public class MetricsHistogram extends MetricsBase {
     this(nam, registry, NO_DESCRIPTION);
   }
 
-  private final Sample sample;
+  private final Reservoir sample;
   private final AtomicLong min;
   private final AtomicLong max;
   private final AtomicLong sum;
