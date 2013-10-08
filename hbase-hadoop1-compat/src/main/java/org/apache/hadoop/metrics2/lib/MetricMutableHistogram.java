@@ -18,9 +18,9 @@
 
 package org.apache.hadoop.metrics2.lib;
 
-import com.yammer.metrics.stats.ExponentiallyDecayingSample;
-import com.yammer.metrics.stats.Sample;
-import com.yammer.metrics.stats.Snapshot;
+import com.codahale.metrics.ExponentiallyDecayingReservoir;
+import com.codahale.metrics.Reservoir;
+import com.codahale.metrics.Snapshot;
 import org.apache.hadoop.metrics2.MetricHistogram;
 import org.apache.hadoop.metrics2.MetricsRecordBuilder;
 
@@ -36,7 +36,7 @@ public class MetricMutableHistogram extends MetricMutable implements MetricHisto
   // Per Cormode et al. an alpha of 0.015 strongly biases to the last 5 minutes
   private static final double DEFAULT_ALPHA = 0.015;
 
-  private final Sample sample;
+  private final Reservoir sample;
   private final AtomicLong min;
   private final AtomicLong max;
   private final AtomicLong sum;
@@ -45,7 +45,7 @@ public class MetricMutableHistogram extends MetricMutable implements MetricHisto
 
   public MetricMutableHistogram(String name, String description) {
     super(name, description);
-    sample = new ExponentiallyDecayingSample(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA);
+    sample = new ExponentiallyDecayingReservoir(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA);
     count = new AtomicLong();
     min = new AtomicLong(Long.MAX_VALUE);
     max = new AtomicLong(Long.MIN_VALUE);

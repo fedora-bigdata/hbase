@@ -29,8 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
 
-import com.yammer.metrics.core.*;
-import com.yammer.metrics.reporting.ConsoleReporter;
+import com.codahale.metrics.*;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -387,7 +386,7 @@ public class HFilePrettyPrinter {
   }
 
   private static class KeyValueStatsCollector {
-    private final MetricsRegistry metricsRegistry = new MetricsRegistry();
+    private final MetricRegistry metricsRegistry = new MetricRegistry();
     private final ByteArrayOutputStream metricsOutput = new ByteArrayOutputStream();
     private final SimpleReporter simpleReporter = new SimpleReporter(metricsRegistry, new PrintStream(metricsOutput));
     Histogram keyLen = metricsRegistry.newHistogram(HFilePrettyPrinter.class, "Key length");
@@ -456,15 +455,15 @@ public class HFilePrettyPrinter {
   private static class SimpleReporter extends ConsoleReporter {
     private final PrintStream out;
 
-    public SimpleReporter(MetricsRegistry metricsRegistry, PrintStream out) {
-      super(metricsRegistry, out, MetricPredicate.ALL);
+    public SimpleReporter(MetricRegistry metricsRegistry, PrintStream out) {
+      super(metricsRegistry, out, MetricFilter.ALL);
       this.out = out;
     }
 
     @Override
     public void run() {
       for (Map.Entry<String, SortedMap<MetricName, Metric>> entry : getMetricsRegistry().groupedMetrics(
-              MetricPredicate.ALL).entrySet()) {
+              MetricFilter.ALL).entrySet()) {
         try {
           for (Map.Entry<MetricName, Metric> subEntry : entry.getValue().entrySet()) {
             out.print("   " + subEntry.getKey().getName());

@@ -26,9 +26,9 @@ import org.apache.hadoop.metrics2.MetricHistogram;
 import org.apache.hadoop.metrics2.MetricsInfo;
 import org.apache.hadoop.metrics2.MetricsRecordBuilder;
 
-import com.yammer.metrics.stats.ExponentiallyDecayingSample;
-import com.yammer.metrics.stats.Sample;
-import com.yammer.metrics.stats.Snapshot;
+import com.codahale.metrics.ExponentiallyDecayingReservoir;
+import com.codahale.metrics.Reservoir;
+import com.codahale.metrics.Snapshot;
 
 /**
  * A histogram implementation that runs in constant space, and exports to hadoop2's metrics2 system.
@@ -43,7 +43,7 @@ public class MutableHistogram extends MutableMetric implements MetricHistogram {
 
   private final String name;
   private final String desc;
-  private final Sample sample;
+  private final Reservoir sample;
   private final AtomicLong min;
   private final AtomicLong max;
   private final AtomicLong sum;
@@ -56,7 +56,7 @@ public class MutableHistogram extends MutableMetric implements MetricHistogram {
   public MutableHistogram(String name, String description) {
     this.name = StringUtils.capitalize(name);
     this.desc = StringUtils.uncapitalize(description);
-    sample = new ExponentiallyDecayingSample(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA);
+    sample = new ExponentiallyDecayingReservoir(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA);
     count = new AtomicLong();
     min = new AtomicLong(Long.MAX_VALUE);
     max = new AtomicLong(Long.MIN_VALUE);
