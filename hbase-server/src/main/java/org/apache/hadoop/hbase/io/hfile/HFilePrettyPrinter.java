@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
+//import java.util.TimeZone;
+//import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.*;
 
@@ -381,11 +383,11 @@ public class HFilePrettyPrinter {
   private static class KeyValueStatsCollector {
     private final MetricRegistry metricsRegistry = new MetricRegistry();
     private final ByteArrayOutputStream metricsOutput = new ByteArrayOutputStream();
-    private final SimpleReporter simpleReporter = new SimpleReporter(metricsRegistry, new PrintStream(metricsOutput));
-    Histogram keyLen = metricsRegistry.newHistogram(HFilePrettyPrinter.class, "Key length");
-    Histogram valLen = metricsRegistry.newHistogram(HFilePrettyPrinter.class, "Val length");
-    Histogram rowSizeBytes = metricsRegistry.newHistogram(HFilePrettyPrinter.class, "Row size (bytes)");
-    Histogram rowSizeCols = metricsRegistry.newHistogram(HFilePrettyPrinter.class, "Row size (columns)");
+    private final SimpleReporter simpleReporter = SimpleReporter.forRegistry(metricsRegistry).outputTo(new PrintStream(metricsOutput)).build();
+    Histogram keyLen = metricsRegistry.histogram("Key length");
+    Histogram valLen = metricsRegistry.histogram("Val length");
+    Histogram rowSizeBytes = metricsRegistry.histogram("Row size (bytes)");
+    Histogram rowSizeCols = metricsRegistry.histogram("Row size (columns)");
 
     long curRowBytes = 0;
     long curRowCols = 0;
@@ -435,9 +437,9 @@ public class HFilePrettyPrinter {
         return "no data available for statistics";
 
       // Dump the metrics to the output stream
-      simpleReporter.shutdown();
-      simpleReporter.run();
-      metricsRegistry.shutdown();
+      simpleReporter.stop();
+      simpleReporter.report();
+      metricsRegistry.stop();
 
       return
               metricsOutput.toString() +
@@ -445,15 +447,150 @@ public class HFilePrettyPrinter {
     }
   }
 
-  private static class SimpleReporter extends ConsoleReporter {
-    private final PrintStream out;
+  public class SimpleReporter extends ConsoleReporter {
+    private final PrintStream output;
+    private final Locale locale;
 
-    public SimpleReporter(MetricRegistry metricsRegistry, PrintStream out) {
-      super(metricsRegistry, out, MetricFilter.ALL);
-      this.out = out;
+    public static Builder forRegistry(MetricRegistry registry) {
+      return new Builder(registry);
+    }
+
+    public static class Builder extends ConsoleReporter.Builder {
+      @Override
+      private Builder(MetricRegistry registry) {
+        super(registry);
+      }
+
+      @Override
+      public Builder outputTo(PrintStream output) {
+        super.outputTo(output);
+        return this;
+      }
+
+      @Override
+      public SimpleReporter build() {
+        return new SimpleReporter(this);
+      }
+    }
+
+    private SimpleReporter(Builder builder) {
+      super(builder);
+//      this.output = output;
+//      this.locale = locale;
     }
 
     @Override
+    public void report(SortedMap<String, Gauge> gauges,
+                       SortedMap<String, Counter> counters,
+                       SortedMap<String, Histogram> histograms,
+                       SortedMap<String, Meter> meters,
+                       SortedMap<String, Timer> timers) {
+      if (!gauges.isEmpty()) {
+        for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
+          output.print("   " + entry.getKey());
+          output.println(':');
+          processGauge(entry);
+        }
+      }
+
+      if (!counters.isEmpty()) {
+        for (Map.Entry<String, Counter> entry : counters.entrySet()) {
+          output.print("   " + entry.getKey());
+          output.println(':');
+          processCounter(entry);
+        }
+      }
+
+      if (!histograms.isEmpty()) {
+        for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
+          output.print("   " + entry.getKey());
+          output.println(':');
+          processHistogram(entry.getValue());
+        }
+      }
+
+      if (!meters.isEmpty()) {
+        for (Map.Entry<String, Meter> entry : meters.entrySet()) {
+          output.print("   " + entry.getKey());
+          output.println(':');
+          processMeter(entry.getValue());
+        }
+      }
+
+      if (!timers.isEmpty()) {
+        for (Map.Entry<String, Timer> entry : timers.entrySet()) {
+          output.print("   " + entry.getKey());
+          output.println(':');
+          processTimer(entry.getValue());
+        }
+      }
+    }
+
+    private void processGauge(Map.Entry<String, Gauge> entry) {
+        output.printf(locale, "    value = %s\n", entry.getValue().getValue());
+    }
+
+    private void processCounter(Map.Entry<String, Counter> entry) {
+        output.printf(locale, "    count = %d\n", entry.getValue().getCount());
+    }
+
+    private void processMeter(Meter meter) {
+        final String rateUnit = getRateUnit();
+        output.printf(locale, "             count = %d\n", meter.getCount());
+        output.printf(locale, "         mean rate = %2.2f events/%s\n",
+                      convertRate(meter.getMeanRate()), rateUnit);
+        output.printf(locale, "     1-minute rate = %2.2f events/%s\n",
+                      convertRate(meter.getOneMinuteRate()), rateUnit);
+        output.printf(locale, "     5-minute rate = %2.2f events/%s\n",
+                      convertRate(meter.getFiveMinuteRate()), rateUnit);
+        output.printf(locale, "    15-minute rate = %2.2f events/%s\n",
+                      convertRate(meter.getFifteenMinuteRate()), rateUnit);
+    }
+
+    private void processHistogram(Histogram histogram) {
+        final Snapshot snapshot = histogram.getSnapshot();
+        output.printf(locale, "               min = %2.2f\n", snapshot.getMin());
+        output.printf(locale, "               max = %2.2f\n", snapshot.getMax());
+        output.printf(locale, "              mean = %2.2f\n", snapshot.getMean());
+        output.printf(locale, "            stddev = %2.2f\n", snapshot.getStdDev());
+        output.printf(locale, "            median = %2.2f\n", snapshot.getMedian());
+        output.printf(locale, "              75%% <= %2.2f\n", snapshot.get75thPercentile());
+        output.printf(locale, "              95%% <= %2.2f\n", snapshot.get95thPercentile());
+        output.printf(locale, "              98%% <= %2.2f\n", snapshot.get98thPercentile());
+        output.printf(locale, "              99%% <= %2.2f\n", snapshot.get99thPercentile());
+        output.printf(locale, "            99.9%% <= %2.2f\n", snapshot.get999thPercentile());
+        output.printf(locale, "             count = %d\n", histogram.getCount());
+    }
+
+    private void processTimer(Timer timer) {
+        final String durationUnit = getDurationUnit();
+        final String rateUnit = getRateUnit();
+        final Snapshot snapshot = timer.getSnapshot();
+        output.printf(locale, "             count = %d\n", timer.getCount());
+        output.printf(locale, "         mean rate = %2.2f events/%s\n",
+                      convertRate(timer.getMeanRate()), rateUnit);
+        output.printf(locale, "     1-minute rate = %2.2f events/%s\n",
+                      convertRate(timer.getOneMinuteRate()), rateUnit);
+        output.printf(locale, "     5-minute rate = %2.2f events/%s\n",
+                      convertRate(timer.getFiveMinuteRate()), rateUnit);
+        output.printf(locale, "    15-minute rate = %2.2f events/%s\n",
+                      convertRate(timer.getFifteenMinuteRate()), rateUnit);
+
+        output.printf(locale, "               min = %2.2f%s\n", convertDuration(snapshot.getMin()), durationUnit);
+        output.printf(locale, "               max = %2.2f%s\n", convertDuration(snapshot.getMax()), durationUnit);
+        output.printf(locale, "              mean = %2.2f%s\n", convertDuration(snapshot.getMean()), durationUnit);
+        output.printf(locale, "            stddev = %2.2f%s\n", convertDuration(snapshot.getStdDev()), durationUnit);
+        output.printf(locale, "            median = %2.2f%s\n", convertDuration(snapshot.getMedian()), durationUnit);
+        output.printf(locale, "              75%% <= %2.2f%s\n", convertDuration(snapshot.get75thPercentile()), durationUnit);
+        output.printf(locale, "              95%% <= %2.2f%s\n", convertDuration(snapshot.get95thPercentile()), durationUnit);
+        output.printf(locale, "              98%% <= %2.2f%s\n", convertDuration(snapshot.get98thPercentile()), durationUnit);
+        output.printf(locale, "              99%% <= %2.2f%s\n", convertDuration(snapshot.get99thPercentile()), durationUnit);
+        output.printf(locale, "            99.9%% <= %2.2f%s\n", convertDuration(snapshot.get999thPercentile()), durationUnit);
+    }
+
+
+
+/*
     public void run() {
       for (Map.Entry<String, SortedMap<MetricName, Metric>> entry : getMetricsRegistry().groupedMetrics(
               MetricFilter.ALL).entrySet()) {
@@ -473,7 +610,8 @@ public class HFilePrettyPrinter {
     @Override
     public void processHistogram(MetricName name, Histogram histogram, PrintStream stream) {
       super.processHistogram(name, histogram, stream);
-      stream.printf(Locale.getDefault(), "             count = %d\n", histogram.count());
+      stream.printf(Locale.getDefault(), "             count = %d\n", histogram.getCount());
     }
+*/
   }
 }
