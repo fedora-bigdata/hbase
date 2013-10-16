@@ -66,6 +66,7 @@ public class MetricsHistogram extends MetricsBase {
     this.min = new AtomicLong();
     this.max = new AtomicLong();
     this.sum = new AtomicLong();
+    this.forwardbiased = forwardBiased;
     this.sample = forwardBiased ? 
         new ExponentiallyDecayingReservoir(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA) 
     : new UniformReservoir(DEFAULT_SAMPLE_SIZE);
@@ -104,6 +105,7 @@ public class MetricsHistogram extends MetricsBase {
   private final AtomicLong min;
   private final AtomicLong max;
   private final AtomicLong sum;
+  private final boolean forwardbiased;
 
   // these are for computing a running-variance, 
   // without letting floating point errors accumulate via Welford's algorithm
@@ -114,7 +116,9 @@ public class MetricsHistogram extends MetricsBase {
    * Clears all recorded values.
    */
   public void clear() {
-    this.sample.clear();
+    this.sample = this.forwardbiased ? 
+        new ExponentiallyDecayingReservoir(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA) 
+    : new UniformReservoir(DEFAULT_SAMPLE_SIZE);
     this.count.set(0);
     this.max.set(Long.MIN_VALUE);
     this.min.set(Long.MAX_VALUE);
