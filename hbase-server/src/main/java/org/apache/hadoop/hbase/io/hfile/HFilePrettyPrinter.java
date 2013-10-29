@@ -28,8 +28,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
-//import java.util.TimeZone;
-//import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.*;
 
@@ -383,7 +382,7 @@ public class HFilePrettyPrinter {
   private static class KeyValueStatsCollector {
     private final MetricRegistry metricsRegistry = new MetricRegistry();
     private final ByteArrayOutputStream metricsOutput = new ByteArrayOutputStream();
-    private final SimpleReporter simpleReporter = SimpleReporter.forRegistry(metricsRegistry).outputTo(new PrintStream(metricsOutput)).build();
+    private final SimpleReporter simpleReporter = new SimpleReporter(metricsRegistry, new PrintStream(metricsOutput));
     Histogram keyLen = metricsRegistry.histogram("Key length");
     Histogram valLen = metricsRegistry.histogram("Val length");
     Histogram rowSizeBytes = metricsRegistry.histogram("Row size (bytes)");
@@ -439,7 +438,6 @@ public class HFilePrettyPrinter {
       // Dump the metrics to the output stream
       simpleReporter.stop();
       simpleReporter.report();
-      metricsRegistry.stop();
 
       return
               metricsOutput.toString() +
@@ -447,36 +445,13 @@ public class HFilePrettyPrinter {
     }
   }
 
-  public class SimpleReporter extends ConsoleReporter {
-    private final PrintStream output;
-    private final Locale locale;
+  private static class SimpleReporter extends ScheduledReporter {
+    private final PrintStream out;
+    private final Locale locale = Locale.getDefault();
 
-    public static Builder forRegistry(MetricRegistry registry) {
-      return new Builder(registry);
-    }
-
-    public static class Builder extends ConsoleReporter.Builder {
-      @Override
-      private Builder(MetricRegistry registry) {
-        super(registry);
-      }
-
-      @Override
-      public Builder outputTo(PrintStream output) {
-        super.outputTo(output);
-        return this;
-      }
-
-      @Override
-      public SimpleReporter build() {
-        return new SimpleReporter(this);
-      }
-    }
-
-    private SimpleReporter(Builder builder) {
-      super(builder);
-//      this.output = output;
-//      this.locale = locale;
+    public SimpleReporter(MetricRegistry metricsRegistry, PrintStream out) {
+      super(metricsRegistry, "simple-reporter", MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+      this.out = out;
     }
 
     @Override
@@ -487,105 +462,105 @@ public class HFilePrettyPrinter {
                        SortedMap<String, Timer> timers) {
       if (!gauges.isEmpty()) {
         for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
-          output.print("   " + entry.getKey());
-          output.println(':');
+          out.print("   " + entry.getKey());
+          out.println(':');
           processGauge(entry);
         }
       }
 
       if (!counters.isEmpty()) {
         for (Map.Entry<String, Counter> entry : counters.entrySet()) {
-          output.print("   " + entry.getKey());
-          output.println(':');
+          out.print("   " + entry.getKey());
+          out.println(':');
           processCounter(entry);
         }
       }
 
       if (!histograms.isEmpty()) {
         for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
-          output.print("   " + entry.getKey());
-          output.println(':');
+          out.print("   " + entry.getKey());
+          out.println(':');
           processHistogram(entry.getValue());
         }
       }
 
       if (!meters.isEmpty()) {
         for (Map.Entry<String, Meter> entry : meters.entrySet()) {
-          output.print("   " + entry.getKey());
-          output.println(':');
+          out.print("   " + entry.getKey());
+          out.println(':');
           processMeter(entry.getValue());
         }
       }
 
       if (!timers.isEmpty()) {
         for (Map.Entry<String, Timer> entry : timers.entrySet()) {
-          output.print("   " + entry.getKey());
-          output.println(':');
+          out.print("   " + entry.getKey());
+          out.println(':');
           processTimer(entry.getValue());
         }
       }
     }
 
     private void processGauge(Map.Entry<String, Gauge> entry) {
-        output.printf(locale, "    value = %s\n", entry.getValue().getValue());
+        out.printf(locale, "    value = %s\n", entry.getValue().getValue());
     }
 
     private void processCounter(Map.Entry<String, Counter> entry) {
-        output.printf(locale, "    count = %d\n", entry.getValue().getCount());
+        out.printf(locale, "    count = %d\n", entry.getValue().getCount());
     }
 
     private void processMeter(Meter meter) {
         final String rateUnit = getRateUnit();
-        output.printf(locale, "             count = %d\n", meter.getCount());
-        output.printf(locale, "         mean rate = %2.2f events/%s\n",
+        out.printf(locale, "             count = %d\n", meter.getCount());
+        out.printf(locale, "         mean rate = %2.2f events/%s\n",
                       convertRate(meter.getMeanRate()), rateUnit);
-        output.printf(locale, "     1-minute rate = %2.2f events/%s\n",
+        out.printf(locale, "     1-minute rate = %2.2f events/%s\n",
                       convertRate(meter.getOneMinuteRate()), rateUnit);
-        output.printf(locale, "     5-minute rate = %2.2f events/%s\n",
+        out.printf(locale, "     5-minute rate = %2.2f events/%s\n",
                       convertRate(meter.getFiveMinuteRate()), rateUnit);
-        output.printf(locale, "    15-minute rate = %2.2f events/%s\n",
+        out.printf(locale, "    15-minute rate = %2.2f events/%s\n",
                       convertRate(meter.getFifteenMinuteRate()), rateUnit);
     }
 
     private void processHistogram(Histogram histogram) {
         final Snapshot snapshot = histogram.getSnapshot();
-        output.printf(locale, "               min = %2.2f\n", snapshot.getMin());
-        output.printf(locale, "               max = %2.2f\n", snapshot.getMax());
-        output.printf(locale, "              mean = %2.2f\n", snapshot.getMean());
-        output.printf(locale, "            stddev = %2.2f\n", snapshot.getStdDev());
-        output.printf(locale, "            median = %2.2f\n", snapshot.getMedian());
-        output.printf(locale, "              75%% <= %2.2f\n", snapshot.get75thPercentile());
-        output.printf(locale, "              95%% <= %2.2f\n", snapshot.get95thPercentile());
-        output.printf(locale, "              98%% <= %2.2f\n", snapshot.get98thPercentile());
-        output.printf(locale, "              99%% <= %2.2f\n", snapshot.get99thPercentile());
-        output.printf(locale, "            99.9%% <= %2.2f\n", snapshot.get999thPercentile());
-        output.printf(locale, "             count = %d\n", histogram.getCount());
+        out.printf(locale, "               min = %2.2f\n", snapshot.getMin());
+        out.printf(locale, "               max = %2.2f\n", snapshot.getMax());
+        out.printf(locale, "              mean = %2.2f\n", snapshot.getMean());
+        out.printf(locale, "            stddev = %2.2f\n", snapshot.getStdDev());
+        out.printf(locale, "            median = %2.2f\n", snapshot.getMedian());
+        out.printf(locale, "              75%% <= %2.2f\n", snapshot.get75thPercentile());
+        out.printf(locale, "              95%% <= %2.2f\n", snapshot.get95thPercentile());
+        out.printf(locale, "              98%% <= %2.2f\n", snapshot.get98thPercentile());
+        out.printf(locale, "              99%% <= %2.2f\n", snapshot.get99thPercentile());
+        out.printf(locale, "            99.9%% <= %2.2f\n", snapshot.get999thPercentile());
+        out.printf(locale, "             count = %d\n", histogram.getCount());
     }
 
     private void processTimer(Timer timer) {
         final String durationUnit = getDurationUnit();
         final String rateUnit = getRateUnit();
         final Snapshot snapshot = timer.getSnapshot();
-        output.printf(locale, "             count = %d\n", timer.getCount());
-        output.printf(locale, "         mean rate = %2.2f events/%s\n",
+        out.printf(locale, "             count = %d\n", timer.getCount());
+        out.printf(locale, "         mean rate = %2.2f events/%s\n",
                       convertRate(timer.getMeanRate()), rateUnit);
-        output.printf(locale, "     1-minute rate = %2.2f events/%s\n",
+        out.printf(locale, "     1-minute rate = %2.2f events/%s\n",
                       convertRate(timer.getOneMinuteRate()), rateUnit);
-        output.printf(locale, "     5-minute rate = %2.2f events/%s\n",
+        out.printf(locale, "     5-minute rate = %2.2f events/%s\n",
                       convertRate(timer.getFiveMinuteRate()), rateUnit);
-        output.printf(locale, "    15-minute rate = %2.2f events/%s\n",
+        out.printf(locale, "    15-minute rate = %2.2f events/%s\n",
                       convertRate(timer.getFifteenMinuteRate()), rateUnit);
 
-        output.printf(locale, "               min = %2.2f%s\n", convertDuration(snapshot.getMin()), durationUnit);
-        output.printf(locale, "               max = %2.2f%s\n", convertDuration(snapshot.getMax()), durationUnit);
-        output.printf(locale, "              mean = %2.2f%s\n", convertDuration(snapshot.getMean()), durationUnit);
-        output.printf(locale, "            stddev = %2.2f%s\n", convertDuration(snapshot.getStdDev()), durationUnit);
-        output.printf(locale, "            median = %2.2f%s\n", convertDuration(snapshot.getMedian()), durationUnit);
-        output.printf(locale, "              75%% <= %2.2f%s\n", convertDuration(snapshot.get75thPercentile()), durationUnit);
-        output.printf(locale, "              95%% <= %2.2f%s\n", convertDuration(snapshot.get95thPercentile()), durationUnit);
-        output.printf(locale, "              98%% <= %2.2f%s\n", convertDuration(snapshot.get98thPercentile()), durationUnit);
-        output.printf(locale, "              99%% <= %2.2f%s\n", convertDuration(snapshot.get99thPercentile()), durationUnit);
-        output.printf(locale, "            99.9%% <= %2.2f%s\n", convertDuration(snapshot.get999thPercentile()), durationUnit);
+        out.printf(locale, "               min = %2.2f%s\n", convertDuration(snapshot.getMin()), durationUnit);
+        out.printf(locale, "               max = %2.2f%s\n", convertDuration(snapshot.getMax()), durationUnit);
+        out.printf(locale, "              mean = %2.2f%s\n", convertDuration(snapshot.getMean()), durationUnit);
+        out.printf(locale, "            stddev = %2.2f%s\n", convertDuration(snapshot.getStdDev()), durationUnit);
+        out.printf(locale, "            median = %2.2f%s\n", convertDuration(snapshot.getMedian()), durationUnit);
+        out.printf(locale, "              75%% <= %2.2f%s\n", convertDuration(snapshot.get75thPercentile()), durationUnit);
+        out.printf(locale, "              95%% <= %2.2f%s\n", convertDuration(snapshot.get95thPercentile()), durationUnit);
+        out.printf(locale, "              98%% <= %2.2f%s\n", convertDuration(snapshot.get98thPercentile()), durationUnit);
+        out.printf(locale, "              99%% <= %2.2f%s\n", convertDuration(snapshot.get99thPercentile()), durationUnit);
+        out.printf(locale, "            99.9%% <= %2.2f%s\n", convertDuration(snapshot.get999thPercentile()), durationUnit);
     }
 
 
