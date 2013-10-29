@@ -101,7 +101,7 @@ public class MetricsHistogram extends MetricsBase {
     this(nam, registry, NO_DESCRIPTION);
   }
 
-  private final Reservoir sample;
+  private Reservoir sample;
   private final AtomicLong min;
   private final AtomicLong max;
   private final AtomicLong sum;
