@@ -200,7 +200,7 @@
     </dependency>
     <dependency>
       <groupId>org.jruby</groupId>
-      <artifactId>jruby-complete</artifactId>
+      <artifactId>jruby</artifactId>
     </dependency>
     <!-- Test Dependencies -->
     <dependency>
