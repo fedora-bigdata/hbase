@@ -154,7 +154,7 @@ limitations under the License.
       <version>${hadoop-two.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.yammer.metrics</groupId>
+      <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-core</artifactId>
     </dependency>
     <dependency>

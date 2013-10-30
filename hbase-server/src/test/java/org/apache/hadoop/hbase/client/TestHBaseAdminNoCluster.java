@@ -35,7 +35,7 @@ import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.CreateTableReques
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.log.Log;
 import org.apache.hadoop.hbase.client.HConnectionTestingUtility;
 
 import com.google.protobuf.RpcController;
@@ -80,7 +80,7 @@ public class TestHBaseAdminNoCluster {
         admin.createTable(htd, HBaseTestingUtility.KEYS_FOR_HBA_CREATE_TABLE);
         fail();
       } catch (RetriesExhaustedException e) {
-        Log.info("Expected fail", e);
+        Log.getRootLogger().info("Expected fail", e);
       }
       // Assert we were called 'count' times.
       Mockito.verify(masterAdmin, Mockito.atLeast(count)).createTable((RpcController)Mockito.any(),

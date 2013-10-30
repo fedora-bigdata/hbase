@@ -40,7 +40,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.MediumTests;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.log.Log;
 
 /**
  * Tests that need to spin up a cluster testing an {@link HRegion}.  Use
@@ -73,7 +73,7 @@ public class TestHRegionOnCluster {
       assertTrue(hbaseAdmin.isTableAvailable(TABLENAME));
 
       // Put data: r1->v1
-      Log.info("Loading r1 to v1 into " + Bytes.toString(TABLENAME));
+      Log.getRootLogger().info("Loading r1 to v1 into " + Bytes.toString(TABLENAME));
       HTable table = new HTable(TEST_UTIL.getConfiguration(), TABLENAME);
       putDataAndVerify(table, "r1", FAMILY, "v1", 1);
 
@@ -87,7 +87,7 @@ public class TestHRegionOnCluster {
       assertFalse(originServer.equals(targetServer));
 
       TEST_UTIL.waitUntilAllRegionsAssigned(table.getName());
-      Log.info("Moving " + regionInfo.getEncodedName() + " to " + targetServer.getServerName());
+      Log.getRootLogger().info("Moving " + regionInfo.getEncodedName() + " to " + targetServer.getServerName());
       hbaseAdmin.move(regionInfo.getEncodedNameAsBytes(),
           Bytes.toBytes(targetServer.getServerName().getServerName()));
       do {
@@ -95,12 +95,12 @@ public class TestHRegionOnCluster {
       } while (cluster.getServerWith(regionInfo.getRegionName()) == originServerNum);
 
       // Put data: r2->v2
-      Log.info("Loading r2 to v2 into " + Bytes.toString(TABLENAME));
+      Log.getRootLogger().info("Loading r2 to v2 into " + Bytes.toString(TABLENAME));
       putDataAndVerify(table, "r2", FAMILY, "v2", 2);
 
       TEST_UTIL.waitUntilAllRegionsAssigned(table.getName());
       // Move region to origin server
-      Log.info("Moving " + regionInfo.getEncodedName() + " to " + originServer.getServerName());
+      Log.getRootLogger().info("Moving " + regionInfo.getEncodedName() + " to " + originServer.getServerName());
       hbaseAdmin.move(regionInfo.getEncodedNameAsBytes(),
           Bytes.toBytes(originServer.getServerName().getServerName()));
       do {
@@ -108,11 +108,11 @@ public class TestHRegionOnCluster {
       } while (cluster.getServerWith(regionInfo.getRegionName()) == targetServerNum);
 
       // Put data: r3->v3
-      Log.info("Loading r3 to v3 into " + Bytes.toString(TABLENAME));
+      Log.getRootLogger().info("Loading r3 to v3 into " + Bytes.toString(TABLENAME));
       putDataAndVerify(table, "r3", FAMILY, "v3", 3);
 
       // Kill target server
-      Log.info("Killing target server " + targetServer.getServerName());
+      Log.getRootLogger().info("Killing target server " + targetServer.getServerName());
       targetServer.kill();
       cluster.getRegionServerThreads().get(targetServerNum).join();
       // Wait until finish processing of shutdown
@@ -120,12 +120,12 @@ public class TestHRegionOnCluster {
         Thread.sleep(5);
       }
       // Kill origin server
-      Log.info("Killing origin server " + targetServer.getServerName());
+      Log.getRootLogger().info("Killing origin server " + targetServer.getServerName());
       originServer.kill();
       cluster.getRegionServerThreads().get(originServerNum).join();
 
       // Put data: r4->v4
-      Log.info("Loading r4 to v4 into " + Bytes.toString(TABLENAME));
+      Log.getRootLogger().info("Loading r4 to v4 into " + Bytes.toString(TABLENAME));
       putDataAndVerify(table, "r4", FAMILY, "v4", 4);
 
     } finally {
