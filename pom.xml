@@ -833,12 +833,13 @@
     <metrics-core.version>3.0.1</metrics-core.version>
     <guava.version>12.0.1</guava.version>
     <jackson.version>1.8.8</jackson.version>
-    <jasper.version>5.5.23</jasper.version>
+    <javax.servlet.version>2.2.5</javax.servlet.version>
     <jaxb-api.version>2.2.2</jaxb-api.version>
     <jetty.version>9.0.4.v20130625</jetty.version>
     <jersey.version>1.8</jersey.version>
     <jruby.version>1.7.2</jruby.version>
     <jspapi.version>2.1</jspapi.version>
+    <jspc-compiler.version>2.0-alpha-3</jspc-compiler.version>
     <junit.version>4.11</junit.version>
     <htrace.version>2.01</htrace.version>
     <log4j.version>1.2.17</log4j.version>
@@ -1189,36 +1190,16 @@
        exceptions out of jetty deploying webapps.
        St.Ack Thu May 20 01:04:41 PDT 2010
       -->
-        <groupId>tomcat</groupId>
-        <artifactId>jasper-compiler</artifactId>
-        <version>${jasper.version}</version>
+        <groupId>org.codehaus.mojo.jspc</groupId>
+        <artifactId>jspc-compiler-tomcat6</artifactId>
+        <version>${jspc-compiler.version}</version>
         <scope>runtime</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>jsp-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>ant</groupId>
-            <artifactId>ant</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
-        <groupId>tomcat</groupId>
-        <artifactId>jasper-runtime</artifactId>
-        <version>${jasper.version}</version>
+        <groupId>org.glassfish.web</groupId>
+        <artifactId>javax.servlet.jsp</artifactId>
+        <version>${javax.servlet.version}</version>
         <scope>runtime</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.jamon</groupId>
