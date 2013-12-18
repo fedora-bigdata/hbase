@@ -24,6 +24,7 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.WriteListener;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 
@@ -74,5 +75,14 @@ public class GZIPResponseStream extends ServletOutputStream
 
   public void finish() throws IOException {
     out.finish();
+  }
+
+  @Override
+  public boolean isReady() {
+    return true;
+  }
+
+  @Override
+  public void setWriteListener(WriteListener writeListener) {
   }
 }
