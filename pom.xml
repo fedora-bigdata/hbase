@@ -868,7 +868,7 @@
     <jackson.version>1.8.8</jackson.version>
     <javax.servlet.version>2.2.5</javax.servlet.version>
     <jaxb-api.version>2.2.2</jaxb-api.version>
-    <jetty.version>9.0.4.v20130625</jetty.version>
+    <jetty.version>9.1.0.v20131115</jetty.version>
     <jersey.version>1.8</jersey.version>
     <jruby.version>1.6.8</jruby.version>
     <jspapi.version>2.1</jspapi.version>
