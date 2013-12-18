@@ -406,10 +406,6 @@
       <artifactId>jackson-jaxrs</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.mojo.jspc</groupId>
-      <artifactId>jspc-compiler-tomcat6</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.glassfish.web</groupId>
       <artifactId>javax.servlet.jsp</artifactId>
     </dependency>

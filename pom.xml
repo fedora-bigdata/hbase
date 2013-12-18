@@ -1213,18 +1213,6 @@
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
-        <!--If this is not in the runtime lib, we get odd
-      "2009-02-27 11:38:39.504::WARN:  failed jsp
-       java.lang.NoSuchFieldError: IS_SECURITY_ENABLED"
-       exceptions out of jetty deploying webapps.
-       St.Ack Thu May 20 01:04:41 PDT 2010
-      -->
-        <groupId>org.codehaus.mojo.jspc</groupId>
-        <artifactId>jspc-compiler-tomcat6</artifactId>
-        <version>${jspc-compiler.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
         <groupId>org.glassfish.web</groupId>
         <artifactId>javax.servlet.jsp</artifactId>
         <version>${javax.servlet.version}</version>
