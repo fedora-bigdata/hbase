@@ -22,6 +22,7 @@ package org.apache.hadoop.hbase.rest.filter;
 import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
+import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
@@ -54,5 +55,29 @@ public class GZIPRequestStream extends ServletInputStream
   @Override
   public void close() throws IOException {
     in.close();
+  }
+
+  @Override
+  public void setReadListener(ReadListener readListener) {
+  }
+
+  @Override
+  public boolean isFinished() {
+    try {
+      return in.available() == 0;
+    }
+    catch (IOException e) {
+      return true;
+    }
+  }
+
+  @Override
+  public boolean isReady() {
+    try {
+      return in.available() == 1;
+    }
+    catch (IOException e) {
+      return false;
+    }
   }
 }
