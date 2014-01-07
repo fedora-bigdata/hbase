@@ -32,7 +32,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.yammer.metrics.stats.Snapshot;
+import com.codahale.metrics.Snapshot;
 
 @SuppressWarnings("deprecation")
 @Category(SmallTests.class)
