@@ -51,9 +51,9 @@ import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.yammer.metrics.core.Meter;
-import com.yammer.metrics.core.MetricsRegistry;
-import com.yammer.metrics.reporting.ConsoleReporter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ConsoleReporter;
 
 /**
  * This class runs performance benchmarks for {@link HLog}.
@@ -63,11 +63,13 @@ import com.yammer.metrics.reporting.ConsoleReporter;
 @InterfaceAudience.Private
 public final class HLogPerformanceEvaluation extends Configured implements Tool {
   static final Log LOG = LogFactory.getLog(HLogPerformanceEvaluation.class.getName());
-  private final MetricsRegistry metrics = new MetricsRegistry();
+  private final MetricRegistry metrics = new MetricRegistry();
   private final Meter syncMeter =
-    metrics.newMeter(HLogPerformanceEvaluation.class, "syncMeter", "syncs", TimeUnit.MILLISECONDS);
+    metrics.meter("syncMeter");
+//    metrics.newMeter(HLogPerformanceEvaluation.class, "syncMeter", "syncs", TimeUnit.MILLISECONDS);
   private final Meter appendMeter =
-    metrics.newMeter(HLogPerformanceEvaluation.class, "append", "bytes", TimeUnit.MILLISECONDS);
+    metrics.meter("append");
+//    metrics.newMeter(HLogPerformanceEvaluation.class, "append", "bytes", TimeUnit.MILLISECONDS);
 
   private HBaseTestingUtility TEST_UTIL;
 
@@ -244,7 +246,8 @@ public final class HLogPerformanceEvaluation extends Configured implements Tool 
       HRegion region = null;
       try {
         region = openRegion(fs, rootRegionDir, htd, hlog);
-        ConsoleReporter.enable(this.metrics, 1, TimeUnit.SECONDS);
+        ConsoleReporter reporter = ConsoleReporter.forRegistry(this.metrics).build();
+        reporter.start(1, TimeUnit.SECONDS);
         long putTime =
           runBenchmark(new HLogPutBenchmark(region, htd, numIterations, noSync, syncInterval),
             numThreads);
