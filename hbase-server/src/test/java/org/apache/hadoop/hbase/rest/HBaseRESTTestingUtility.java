@@ -18,6 +18,9 @@
  */
 package org.apache.hadoop.hbase.rest;
 
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,9 +28,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.HttpServerUtil;
 import org.apache.hadoop.util.StringUtils;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
@@ -66,7 +69,7 @@ public class HBaseRESTTestingUtility {
     server.setSendServerVersion(false);
     server.setSendDateHeader(false);
       // set up context
-    Context context = new Context(server, "/", Context.SESSIONS);
+    ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
     context.addServlet(sh, "/*");
     // Load filters specified from configuration.
     String[] filterClasses = conf.getStrings(Constants.FILTER_CLASSES,
