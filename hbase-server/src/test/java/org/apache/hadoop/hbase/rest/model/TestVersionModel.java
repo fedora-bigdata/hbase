@@ -39,7 +39,7 @@ public class TestVersionModel extends TestModelBase<VersionModel> {
     "Linux 2.6.18-128.1.6.el5.centos.plusxen amd64";
   private static final String JVM_VERSION =
     "Sun Microsystems Inc. 1.6.0_13-11.3-b02";
-  private static final String JETTY_VERSION = "6.1.14";
+  private static final String JETTY_VERSION = "8.1.14.v20131031";
   private static final String JERSEY_VERSION = "1.1.0-ea";
   
   public TestVersionModel() throws Exception {

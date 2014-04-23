@@ -32,10 +32,10 @@ import org.apache.hadoop.hbase.PleaseHoldException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.CreateTableRequest;
+import org.eclipse.jetty.util.log.Log;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
-import org.mortbay.log.Log;
 import org.apache.hadoop.hbase.client.HConnectionTestingUtility;
 
 import com.google.protobuf.RpcController;
