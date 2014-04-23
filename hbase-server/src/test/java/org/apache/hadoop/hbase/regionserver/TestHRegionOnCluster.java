@@ -38,9 +38,9 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.MediumTests;
+import org.eclipse.jetty.util.log.Log;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mortbay.log.Log;
 
 /**
  * Tests that need to spin up a cluster testing an {@link HRegion}.  Use
