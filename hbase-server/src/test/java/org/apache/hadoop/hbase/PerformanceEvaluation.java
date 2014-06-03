@@ -84,8 +84,8 @@ import org.apache.hadoop.util.ToolRunner;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.yammer.metrics.core.Histogram;
-import com.yammer.metrics.core.MetricsRegistry;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 
 /**
  * Script used evaluating HBase performance and scalability.  Runs a HBase
