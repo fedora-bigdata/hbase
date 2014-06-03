@@ -895,6 +895,7 @@
     <metrics-core.version>3.0.1</metrics-core.version>
     <guava.version>12.0.1</guava.version>
     <jackson.version>1.8.8</jackson.version>
+    <jasper.version>7.0.47</jasper.version>
     <javax.servlet.version>2.2.5</javax.servlet.version>
     <jaxb-api.version>2.2.2</jaxb-api.version>
     <jetty.version>8.1.14.v20131031</jetty.version>
@@ -1250,6 +1251,12 @@
         <groupId>org.glassfish.web</groupId>
         <artifactId>javax.servlet.jsp</artifactId>
         <version>${javax.servlet.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tomcat</groupId>
+        <artifactId>tomcat-jasper</artifactId>
+        <version>${jasper.version}</version>
         <scope>runtime</scope>
       </dependency>
       <dependency>
