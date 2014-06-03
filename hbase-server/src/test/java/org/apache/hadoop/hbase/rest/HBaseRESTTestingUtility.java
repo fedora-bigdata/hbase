@@ -76,7 +76,7 @@ public class HBaseRESTTestingUtility {
       ArrayUtils.EMPTY_STRING_ARRAY);
     for (String filter : filterClasses) {
       filter = filter.trim();
-      context.addFilter(Class.forName(filter), "/*", 0);
+      context.addFilter(filter, "/*", EnumSet.of(DispatcherType.REQUEST));
     }
     HttpServerUtil.constrainHttpMethods(context);
     LOG.info("Loaded filter classes :" + filterClasses);
