@@ -47,11 +47,6 @@ public class HttpServerUtil {
 
     ConstraintSecurityHandler sh = new ConstraintSecurityHandler();
     sh.setConstraintMappings(new ConstraintMapping[]{ cmt, cmo });
-
-    ContextHandlerCollection handlers = new ContextHandlerCollection();
-    handlers.setHandlers(context.getHandlers());
-    handlers.addHandler(sh);
-
-    context.setHandler(handlers);
+    context.setHandler(sh);
   }
 }
