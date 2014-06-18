@@ -900,7 +900,7 @@
     <jaxb-api.version>2.2.2</jaxb-api.version>
     <jetty.version>8.1.14.v20131031</jetty.version>
     <jersey.version>1.8</jersey.version>
-    <jruby.version>1.6.8</jruby.version>
+    <jruby.version>1.7.2</jruby.version>
     <jspapi.version>2.1</jspapi.version>
     <junit.version>4.11</junit.version>
     <htrace.version>2.04</htrace.version>
@@ -1190,7 +1190,7 @@
       </dependency>
       <dependency>
         <groupId>org.jruby</groupId>
-        <artifactId>jruby-complete</artifactId>
+        <artifactId>jruby</artifactId>
         <version>${jruby.version}</version>
       </dependency>
       <dependency>
