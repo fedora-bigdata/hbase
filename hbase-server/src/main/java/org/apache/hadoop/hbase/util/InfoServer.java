@@ -27,9 +27,9 @@ import java.util.Map;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.http.HttpServer;
-import org.mortbay.jetty.handler.ContextHandlerCollection;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 
 /**
  * Create a Jetty embedded server to answer http requests. The primary goal
@@ -69,8 +69,8 @@ public class InfoServer extends HttpServer {
     // Must be same as up in hadoop.
     final String logsContextPath = "/logs";
     // Now, put my logs in place of hadoops... disable old one first.
-    Context oldLogsContext = null;
-    for (Map.Entry<Context, Boolean> e : defaultContexts.entrySet()) {
+    ServletContextHandler oldLogsContext = null;
+    for (Map.Entry<ServletContextHandler, Boolean> e : defaultContexts.entrySet()) {
       if (e.getKey().getContextPath().equals(logsContextPath)) {
         oldLogsContext = e.getKey();
         break;
@@ -84,8 +84,8 @@ public class InfoServer extends HttpServer {
     String logDir = System.getProperty("hbase.log.dir");
     if (logDir != null) {
       // This is a little presumptious but seems to work.
-      Context logContext =
-        new Context((ContextHandlerCollection)this.webServer.getHandler(),
+      ServletContextHandler logContext =
+        new ServletContextHandler((ContextHandlerCollection)this.webServer.getHandler(),
           logsContextPath);
       logContext.setResourceBase(logDir);
       logContext.addServlet(DefaultServlet.class, "/");

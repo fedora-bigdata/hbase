@@ -33,7 +33,7 @@ import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.log.Log;
 
 /**
  * A client scanner for a region opened for read-only on the client side. Assumes region data
