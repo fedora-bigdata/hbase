@@ -25,10 +25,10 @@ import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.util.MetricsBase;
 import org.apache.hadoop.metrics.util.MetricsRegistry;
 
-import com.yammer.metrics.stats.Sample;
-import com.yammer.metrics.stats.Snapshot;
-import com.yammer.metrics.stats.UniformSample;
-import com.yammer.metrics.stats.ExponentiallyDecayingSample;
+import com.codahale.metrics.Reservoir;
+import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.UniformReservoir;
+import com.codahale.metrics.ExponentiallyDecayingReservoir;
 
 @Deprecated
 public class MetricsHistogram extends MetricsBase {
@@ -66,9 +66,10 @@ public class MetricsHistogram extends MetricsBase {
     this.min = new AtomicLong();
     this.max = new AtomicLong();
     this.sum = new AtomicLong();
+    this.forwardbiased = forwardBiased;
     this.sample = forwardBiased ? 
-        new ExponentiallyDecayingSample(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA) 
-    : new UniformSample(DEFAULT_SAMPLE_SIZE);
+        new ExponentiallyDecayingReservoir(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA) 
+    : new UniformReservoir(DEFAULT_SAMPLE_SIZE);
 
     this.variance =  new AtomicReference<double[]>(new double[]{-1, 0});
     this.count = new AtomicLong();
@@ -100,10 +101,11 @@ public class MetricsHistogram extends MetricsBase {
     this(nam, registry, NO_DESCRIPTION);
   }
 
-  private final Sample sample;
+  private Reservoir sample;
   private final AtomicLong min;
   private final AtomicLong max;
   private final AtomicLong sum;
+  private final boolean forwardbiased;
 
   // these are for computing a running-variance, 
   // without letting floating point errors accumulate via Welford's algorithm
@@ -114,7 +116,9 @@ public class MetricsHistogram extends MetricsBase {
    * Clears all recorded values.
    */
   public void clear() {
-    this.sample.clear();
+    this.sample = this.forwardbiased ? 
+        new ExponentiallyDecayingReservoir(DEFAULT_SAMPLE_SIZE, DEFAULT_ALPHA) 
+    : new UniformReservoir(DEFAULT_SAMPLE_SIZE);
     this.count.set(0);
     this.max.set(Long.MIN_VALUE);
     this.min.set(Long.MAX_VALUE);
