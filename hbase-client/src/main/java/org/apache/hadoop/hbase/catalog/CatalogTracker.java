@@ -47,6 +47,7 @@ import java.net.NoRouteToHostException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tracks the availability of the catalog tables
@@ -304,11 +305,11 @@ public class CatalogTracker {
    * @throws InterruptedException if interrupted while waiting
    */
   public void waitForMeta() throws InterruptedException {
-    Stopwatch stopwatch = new Stopwatch().start();
+    Stopwatch stopwatch = Stopwatch.createStarted();
     while (!this.stopped) {
       try {
         if (waitForMeta(100) != null) break;
-        long sleepTime = stopwatch.elapsedMillis();
+        long sleepTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
         // +1 in case sleepTime=0
         if ((sleepTime + 1) % 10000 == 0) {
           LOG.warn("Have been waiting for meta to be assigned for " + sleepTime + "ms");

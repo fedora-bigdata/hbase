@@ -100,8 +100,8 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
     FileSystem fs = filename.getFileSystem(getConf());
 
     // read the file from start to finish
-    Stopwatch fileOpenTimer = new Stopwatch();
-    Stopwatch streamTimer = new Stopwatch();
+    Stopwatch fileOpenTimer = Stopwatch.createUnstarted();
+    Stopwatch streamTimer = Stopwatch.createUnstarted();
 
     fileOpenTimer.start();
     FSDataInputStream in = fs.open(filename);
@@ -118,11 +118,11 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
     }
     streamTimer.stop();
 
-    double throughput = (double)totalBytes / streamTimer.elapsedTime(TimeUnit.SECONDS);
+    double throughput = (double)totalBytes / streamTimer.elapsed(TimeUnit.SECONDS);
 
     System.out.println("HDFS streaming: ");
-    System.out.println("total time to open: " + fileOpenTimer.elapsedMillis() + " ms");
-    System.out.println("total time to read: " + streamTimer.elapsedMillis() + " ms");
+    System.out.println("total time to open: " + fileOpenTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
+    System.out.println("total time to read: " + streamTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
     System.out.println("total bytes: " + totalBytes + " bytes ("
         + StringUtils.humanReadableInt(totalBytes) + ")");
     System.out.println("throghput  : " + StringUtils.humanReadableInt((long)throughput) + "B/s");
@@ -141,9 +141,9 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
   }
 
   public void testScan() throws IOException {
-    Stopwatch tableOpenTimer = new Stopwatch();
-    Stopwatch scanOpenTimer = new Stopwatch();
-    Stopwatch scanTimer = new Stopwatch();
+    Stopwatch tableOpenTimer = Stopwatch.createUnstarted();
+    Stopwatch scanOpenTimer = Stopwatch.createUnstarted();
+    Stopwatch scanTimer = Stopwatch.createUnstarted();
 
     tableOpenTimer.start();
     HTable table = new HTable(getConf(), TableName.valueOf(tablename));
@@ -172,14 +172,14 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
 
     ScanMetrics metrics = ProtobufUtil.toScanMetrics(scan.getAttribute(Scan.SCAN_ATTRIBUTES_METRICS_DATA));
     long totalBytes = metrics.countOfBytesInResults.get();
-    double throughput = (double)totalBytes / scanTimer.elapsedTime(TimeUnit.SECONDS);
-    double throughputRows = (double)numRows / scanTimer.elapsedTime(TimeUnit.SECONDS);
-    double throughputCells = (double)numCells / scanTimer.elapsedTime(TimeUnit.SECONDS);
+    double throughput = (double)totalBytes / scanTimer.elapsed(TimeUnit.SECONDS);
+    double throughputRows = (double)numRows / scanTimer.elapsed(TimeUnit.SECONDS);
+    double throughputCells = (double)numCells / scanTimer.elapsed(TimeUnit.SECONDS);
 
     System.out.println("HBase scan: ");
-    System.out.println("total time to open table: " + tableOpenTimer.elapsedMillis() + " ms");
-    System.out.println("total time to open scanner: " + scanOpenTimer.elapsedMillis() + " ms");
-    System.out.println("total time to scan: " + scanTimer.elapsedMillis() + " ms");
+    System.out.println("total time to open table: " + tableOpenTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
+    System.out.println("total time to open scanner: " + scanOpenTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
+    System.out.println("total time to scan: " + scanTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
 
     System.out.println("Scan metrics:\n" + metrics.getMetricsMap());
 
@@ -194,9 +194,9 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
 
 
   public void testSnapshotScan() throws IOException {
-    Stopwatch snapshotRestoreTimer = new Stopwatch();
-    Stopwatch scanOpenTimer = new Stopwatch();
-    Stopwatch scanTimer = new Stopwatch();
+    Stopwatch snapshotRestoreTimer = Stopwatch.createUnstarted();
+    Stopwatch scanOpenTimer = Stopwatch.createUnstarted();
+    Stopwatch scanTimer = Stopwatch.createUnstarted();
 
     Path restoreDir = new Path(this.restoreDir);
 
@@ -226,14 +226,14 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
 
     ScanMetrics metrics = scanner.getScanMetrics();
     long totalBytes = metrics.countOfBytesInResults.get();
-    double throughput = (double)totalBytes / scanTimer.elapsedTime(TimeUnit.SECONDS);
-    double throughputRows = (double)numRows / scanTimer.elapsedTime(TimeUnit.SECONDS);
-    double throughputCells = (double)numCells / scanTimer.elapsedTime(TimeUnit.SECONDS);
+    double throughput = (double)totalBytes / scanTimer.elapsed(TimeUnit.SECONDS);
+    double throughputRows = (double)numRows / scanTimer.elapsed(TimeUnit.SECONDS);
+    double throughputCells = (double)numCells / scanTimer.elapsed(TimeUnit.SECONDS);
 
     System.out.println("HBase scan snapshot: ");
-    System.out.println("total time to restore snapshot: " + snapshotRestoreTimer.elapsedMillis() + " ms");
-    System.out.println("total time to open scanner: " + scanOpenTimer.elapsedMillis() + " ms");
-    System.out.println("total time to scan: " + scanTimer.elapsedMillis() + " ms");
+    System.out.println("total time to restore snapshot: " + snapshotRestoreTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
+    System.out.println("total time to open scanner: " + scanOpenTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
+    System.out.println("total time to scan: " + scanTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
 
     System.out.println("Scan metrics:\n" + metrics.getMetricsMap());
 
@@ -263,8 +263,8 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
   }
 
   public void testScanMapReduce() throws IOException, InterruptedException, ClassNotFoundException {
-    Stopwatch scanOpenTimer = new Stopwatch();
-    Stopwatch scanTimer = new Stopwatch();
+    Stopwatch scanOpenTimer = Stopwatch.createUnstarted();
+    Stopwatch scanTimer = Stopwatch.createUnstarted();
 
     Scan scan = getScan();
 
@@ -298,13 +298,13 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
     long numCells = counters.findCounter(ScanCounter.NUM_CELLS).getValue();
 
     long totalBytes = counters.findCounter(HBASE_COUNTER_GROUP_NAME, "BYTES_IN_RESULTS").getValue();
-    double throughput = (double)totalBytes / scanTimer.elapsedTime(TimeUnit.SECONDS);
-    double throughputRows = (double)numRows / scanTimer.elapsedTime(TimeUnit.SECONDS);
-    double throughputCells = (double)numCells / scanTimer.elapsedTime(TimeUnit.SECONDS);
+    double throughput = (double)totalBytes / scanTimer.elapsed(TimeUnit.SECONDS);
+    double throughputRows = (double)numRows / scanTimer.elapsed(TimeUnit.SECONDS);
+    double throughputCells = (double)numCells / scanTimer.elapsed(TimeUnit.SECONDS);
 
     System.out.println("HBase scan mapreduce: ");
-    System.out.println("total time to open scanner: " + scanOpenTimer.elapsedMillis() + " ms");
-    System.out.println("total time to scan: " + scanTimer.elapsedMillis() + " ms");
+    System.out.println("total time to open scanner: " + scanOpenTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
+    System.out.println("total time to scan: " + scanTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
 
     System.out.println("total bytes: " + totalBytes + " bytes ("
         + StringUtils.humanReadableInt(totalBytes) + ")");
@@ -316,8 +316,8 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
   }
 
   public void testSnapshotScanMapReduce() throws IOException, InterruptedException, ClassNotFoundException {
-    Stopwatch scanOpenTimer = new Stopwatch();
-    Stopwatch scanTimer = new Stopwatch();
+    Stopwatch scanOpenTimer = Stopwatch.createUnstarted();
+    Stopwatch scanTimer = Stopwatch.createUnstarted();
 
     Scan scan = getScan();
 
@@ -353,13 +353,13 @@ public class ScanPerformanceEvaluation extends AbstractHBaseTool {
     long numCells = counters.findCounter(ScanCounter.NUM_CELLS).getValue();
 
     long totalBytes = counters.findCounter(HBASE_COUNTER_GROUP_NAME, "BYTES_IN_RESULTS").getValue();
-    double throughput = (double)totalBytes / scanTimer.elapsedTime(TimeUnit.SECONDS);
-    double throughputRows = (double)numRows / scanTimer.elapsedTime(TimeUnit.SECONDS);
-    double throughputCells = (double)numCells / scanTimer.elapsedTime(TimeUnit.SECONDS);
+    double throughput = (double)totalBytes / scanTimer.elapsed(TimeUnit.SECONDS);
+    double throughputRows = (double)numRows / scanTimer.elapsed(TimeUnit.SECONDS);
+    double throughputCells = (double)numCells / scanTimer.elapsed(TimeUnit.SECONDS);
 
     System.out.println("HBase scan mapreduce: ");
-    System.out.println("total time to open scanner: " + scanOpenTimer.elapsedMillis() + " ms");
-    System.out.println("total time to scan: " + scanTimer.elapsedMillis() + " ms");
+    System.out.println("total time to open scanner: " + scanOpenTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
+    System.out.println("total time to scan: " + scanTimer.elapsed(TimeUnit.MILLISECONDS) + " ms");
 
     System.out.println("total bytes: " + totalBytes + " bytes ("
         + StringUtils.humanReadableInt(totalBytes) + ")");

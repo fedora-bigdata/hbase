@@ -30,6 +30,7 @@ import java.util.SortedMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -706,8 +707,7 @@ public class TestClientNoCluster extends Configured implements Tool {
     Random rd = new Random(id);
     boolean get = c.getBoolean("hbase.test.do.gets", false);
     try {
-      Stopwatch stopWatch = new Stopwatch();
-      stopWatch.start();
+      Stopwatch stopWatch = Stopwatch.createStarted();
       for (int i = 0; i < namespaceSpan; i++) {
         byte [] b = format(rd.nextLong());
         if (get){
@@ -719,7 +719,7 @@ public class TestClientNoCluster extends Configured implements Tool {
           table.put(p);
         }
         if (i % printInterval == 0) {
-          LOG.info("Put " + printInterval + "/" + stopWatch.elapsedMillis());
+          LOG.info("Put " + printInterval + "/" + stopWatch.elapsed(TimeUnit.MILLISECONDS));
           stopWatch.reset();
           stopWatch.start();
         }
